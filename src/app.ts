@@ -1,10 +1,11 @@
-import express from 'express';
-import paymentRoutes from './routes/payment.routes.js';
-import env from './config/env.js';
-import crypto from 'crypto';
-import { requestLogger, logger } from './utils/logger.js';
-import { configureSecurityMiddleware } from './middleware/security.js';
-import { startKeepAlive } from './utils/keep-alive.js';
+import express from "express";
+import paymentRoutes from "./routes/payment.routes.js";
+import env from "./config/env.js";
+import crypto from "crypto";
+import { requestLogger } from "./utils/logger.js";
+import logger from "./utils/logger.js";
+import { configureSecurityMiddleware } from "./middleware/security.js";
+import { startKeepAlive } from "./utils/keep-alive.js";
 
 const app = express();
 
@@ -14,11 +15,11 @@ app.use(requestLogger);
 configureSecurityMiddleware(app);
 
 // Routes
-app.use('/api', paymentRoutes);
+app.use("/api", paymentRoutes);
 
 // Health check endpoint
-app.get('/health', (req, res) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+app.get("/health", (req, res) => {
+  res.json({ status: "ok", timestamp: new Date().toISOString() });
 });
 
 // Test endpoint
@@ -60,27 +61,83 @@ app.post("/api/test/sbpay", async (req, res) => {
   }
 });
 
-// Error handling middleware
-app.use((err: Error, req: express.Request, res: express.Response, next: express.NextFunction) => {
-  logger.error('Unhandled error:', err);
-  res.status(500).json({ error: 'Internal server error' });
+// Test webhook endpoint
+app.post("/api/test/webhook", async (req, res) => {
+  try {
+    const testPayload = {
+      order_id: `ORDER_${Date.now()}`,
+      status: "completed",
+      amount: 100,
+      currency: "ILS",
+    };
+
+    logger.info("Creating test webhook request", { payload: testPayload });
+
+    const signature = crypto
+      .createHmac("sha256", env.SBPAY_SECRET)
+      .update(JSON.stringify(testPayload))
+      .digest("hex");
+
+    const webhookUrl = `${req.protocol}://${req.get(
+      "host"
+    )}/api/webhook/payment`;
+    logger.info("Sending test webhook", { url: webhookUrl });
+
+    const response = await fetch(webhookUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-SBPay-Signature": signature,
+      },
+      body: JSON.stringify(testPayload),
+    });
+
+    const result = await response.json();
+    logger.info("Test webhook response", { result });
+    res.json(result);
+  } catch (error) {
+    logger.error("Test webhook failed:", {
+      error,
+      stack: (error as Error).stack,
+    });
+    res.status(500).json({
+      error: "Test webhook failed",
+      details:
+        process.env.NODE_ENV === "development"
+          ? (error as Error).message
+          : undefined,
+    });
+  }
 });
+
+// Error handling middleware
+app.use(
+  (
+    err: Error,
+    req: express.Request,
+    res: express.Response,
+    next: express.NextFunction
+  ) => {
+    logger.error("Unhandled error:", err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+);
 
 const server = app.listen(env.PORT, () => {
   logger.info(`Server running on port ${env.PORT}`);
-  
-  if (env.NODE_ENV === 'production') {
+
+  if (env.NODE_ENV === "production") {
     startKeepAlive();
   }
 });
 
 // Graceful shutdown
-process.on('SIGTERM', () => {
-  logger.info('SIGTERM received. Shutting down gracefully...');
+process.on("SIGTERM", () => {
+  logger.info("SIGTERM received. Shutting down gracefully...");
   server.close(() => {
-    logger.info('Server closed');
+    logger.info("Server closed");
     process.exit(0);
   });
 });
 
-export default app; 
+export default app;

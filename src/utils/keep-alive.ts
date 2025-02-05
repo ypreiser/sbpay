@@ -1,5 +1,5 @@
 import fetch from 'node-fetch';
-import { logger } from './logger.js';
+import logger from "./logger.js";
 
 const PING_INTERVAL = 5 * 60 * 1000; // 5 minutes
 const APP_URL = process.env.APP_URL || 'https://your-app.onrender.com';

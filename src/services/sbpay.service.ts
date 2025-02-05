@@ -1,5 +1,6 @@
 import crypto from 'crypto';
 import env from '../config/env.js';
+import logger from '../utils/logger.js';
 
 export class SBPayService {
   private static instance: SBPayService;
@@ -40,17 +41,46 @@ export class SBPayService {
       "X-Signature": signature,
     };
 
-    const response = await fetch(`${env.SBPAY_API_URL}${endpoint}`, {
-      method: "POST",
-      headers,
-      body: bodyString,
+    const url = `${env.SBPAY_API_URL}${endpoint}`;
+    logger.info("Approving order:", { 
+      url,
+      orderId,
+      headers: {
+        ...headers,
+        "X-Auth-Token": "REDACTED"  // Don't log sensitive data
+      },
+      body: bodyString 
     });
 
-    if (!response.ok) {
-      throw new Error(`Failed to approve order: ${response.statusText}`);
-    }
+    try {
+      const response = await fetch(url, {
+        method: "POST",
+        headers,
+        body: bodyString,
+      });
 
-    return response.json();
+      if (!response.ok) {
+        const errorText = await response.text();
+        logger.error("Order approval failed:", {
+          status: response.status,
+          statusText: response.statusText,
+          errorText,
+          orderId
+        });
+        throw new Error(`Failed to approve order: ${response.statusText}. Details: ${errorText}`);
+      }
+
+      const result = await response.json();
+      logger.info("Order approved successfully:", { orderId, result });
+      return result;
+    } catch (error) {
+      logger.error("Order approval error:", {
+        error,
+        stack: (error as Error).stack,
+        orderId
+      });
+      throw error;
+    }
   }
 
   generateSignature(data: string): string {
