@@ -1,8 +1,8 @@
 import type { Request, Response } from 'express';
-import { sbPayRequestSchema } from '../types/sbpay.ts';
-import { SBPayService } from '../services/sbpay.service.ts';
-import { YaadPayService } from '../services/yaadpay.service.ts';
-import env from '../config/env.ts';
+import { sbPayRequestSchema } from '../types/sbpay.js';
+import { SBPayService } from '../services/sbpay.service.js';
+import { YaadPayService } from '../services/yaadpay.service.js';
+import env from '../config/env.js';
 
 export class PaymentController {
   private sbPayService = SBPayService.getInstance();
