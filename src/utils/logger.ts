@@ -3,7 +3,7 @@ type Request = express.Request;
 type Response = express.Response;
 type NextFunction = express.NextFunction;
 
-export const logger = {
+const logger = {
   info: (message: string, meta?: any) => {
     console.log(new Date().toISOString(), "INFO:", message, meta || "");
   },
@@ -30,3 +30,5 @@ export const requestLogger = (
 
   next();
 };
+
+export default logger;
