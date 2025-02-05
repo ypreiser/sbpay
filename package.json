@@ -4,7 +4,7 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "start": "node --env-file .env dist/app.js",
+    "start": "node dist/app.js",
     "build": "tsc",
     "dev": "node --env-file .env src/app.ts",
     "test": "test"
