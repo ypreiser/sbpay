@@ -24,8 +24,20 @@ app.get("/health", (req, res) => {
 
 // Test endpoint
 app.post("/api/test", async (req, res) => {
-  logger.info("Received test request", req);
+  try {
+    logger.info("Received test request", {
+      headers: req.headers,
+      query: req.query,
+      body: req.body,
+    });
+
+    res.status(200).json({ message: "Received successfully", data: req.body });
+  } catch (error) {
+    console.error("Error processing test request:", error);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
 });
+
 
 app.post("/api/test/sbpay", async (req, res) => {
   try {
