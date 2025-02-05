@@ -1,10 +1,10 @@
 import express from 'express';
-import paymentRoutes from './routes/payment.routes.ts';
-import env from './config/env.ts';
+import paymentRoutes from './routes/payment.routes.js';
+import env from './config/env.js';
 import crypto from 'crypto';
-import { requestLogger, logger } from './utils/logger.ts';
-import { configureSecurityMiddleware } from './middleware/security.ts';
-import { startKeepAlive } from './utils/keep-alive.ts';
+import { requestLogger, logger } from './utils/logger.js';
+import { configureSecurityMiddleware } from './middleware/security.js';
+import { startKeepAlive } from './utils/keep-alive.js';
 
 const app = express();
 

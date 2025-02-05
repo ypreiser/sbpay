@@ -1,4 +1,4 @@
-import env from "./env.ts";
+import env from "./env.js";
 
 export const config = {
   development: {
