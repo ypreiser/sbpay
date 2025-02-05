@@ -5,6 +5,6 @@ const router = Router();
 const paymentController = new PaymentController();
 
 router.post('/payment', (req, res) => paymentController.processPayment(req, res));
-router.post('/webhook/payment', (req, res) => paymentController.handleWebhook(req, res));
+router.get('/yaad-callback', (req, res) => paymentController.handleYaadWebhook(req, res));
 
 export default router; 
