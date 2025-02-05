@@ -1,0 +1,27 @@
+services:
+  - type: web
+    name: sbpay
+    env: node
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3000
+      - key: APP_URL
+        sync: false
+      - key: YAAD_MASOF
+        sync: false
+      - key: YAAD_KEY
+        sync: false
+      - key: YAAD_PassP
+        sync: false
+      - key: SBPAY_API_KEY
+        sync: false
+      - key: SBPAY_SECRET
+        sync: false
+      - key: SBPAY_MERCHANT
+        sync: false
+      - key: SBPAY_API_URL
+        sync: false 

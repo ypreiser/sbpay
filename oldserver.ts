@@ -1,4 +1,5 @@
 import express from "express";
+import type { Request, Response } from "express";
 import { z } from "zod";
 import crypto from "crypto";
 
@@ -41,7 +42,7 @@ function validateSBPaySignature(
 // Add these constants at the top with other imports
 const SBPAY_API_URL = process.env.SBPAY_API_URL || "https://app.sbpay.me/api";
 const SBPAY_API_KEY = process.env.SBPAY_API_KEY;
-const SBPAY_MERCHANT= process.env.SBPAY_MERCHANT;
+const SBPAY_MERCHANT = process.env.SBPAY_MERCHANT;
 
 // Add this helper function near other helper functions
 function generateSBPayHmacSignature(
@@ -87,7 +88,7 @@ async function approveSBPayOrder(orderId: string) {
 }
 
 // Main payment endpoint
-app.post("/api/payment", async (req, res) => {
+app.post("/api/payment", async (req: Request, res: Response): Promise<any> => {
   try {
     const sbPaySignature = req.headers["x-sbpay-signature"];
     if (!sbPaySignature) {
@@ -104,9 +105,9 @@ app.post("/api/payment", async (req, res) => {
     const signatureUrl = `https://icom.yaad.net/p/?${new URLSearchParams({
       action: "APISign",
       What: "SIGN",
-      KEY: process.env.TEST_KEY!,
-      PassP: process.env.TEST_PassP!,
-      Masof: process.env.TEST_Masof!,
+      KEY: process.env.YAAD_KEY!,
+      PassP: process.env.YAAD_PassP!,
+      Masof: process.env.YAAD_Masof!,
       Order: paymentData.transaction_id,
       Amount: paymentData.amount.toString(),
       ClientName: paymentData.customer.name,
@@ -115,10 +116,12 @@ app.post("/api/payment", async (req, res) => {
     })}`;
 
     const signResponse = await fetch(signatureUrl);
-    const signature = await signResponse.text();
+    const YaadResponseWithSignature = await signResponse.text();
+    
 
     // Create final payment URL
-    const finalPaymentUrl = `https://icom.yaad.net/p/?action=pay&${signature}`;
+    const finalPaymentUrl = `https://icom.yaad.net/p/?action=pay&${YaadResponseWithSignature}`;
+    console.log({finalPaymentUrl});
 
     // Return or redirect based on environment
     if (process.env.NODE_ENV === "production") {
@@ -129,7 +132,7 @@ app.post("/api/payment", async (req, res) => {
       status: "success",
       payment_url: finalPaymentUrl,
       transaction_id: paymentData.transaction_id,
-      debug: { signatureUrl, signature, finalPaymentUrl },
+      debug: { signatureUrl, signature: YaadResponseWithSignature, finalPaymentUrl },
     });
   } catch (error) {
     console.error("Payment processing failed:", error);
@@ -138,7 +141,7 @@ app.post("/api/payment", async (req, res) => {
 });
 
 // Test endpoint
-app.post("/api/test/sbpay", async (req, res) => {
+app.post("/api/test/sbpay", async (req: Request, res: Response) => {
   try {
     const sbPayRequest = {
       transaction_id: `SBPAY_${Date.now()}`,
@@ -177,34 +180,35 @@ app.post("/api/test/sbpay", async (req, res) => {
 });
 
 // Add webhook endpoint to handle successful payments
-app.post("/api/webhook/payment", async (req, res) => {
-  try {
-    const signature = req.headers["x-sbpay-signature"];
-    if (!signature) {
-      return res.status(401).json({ error: "Missing signature" });
+app.post(
+  "/api/webhook/payment",
+  async (req: Request, res: Response): Promise<any> => {
+    try {
+      const signature = req.headers["x-sbpay-signature"];
+      if (!signature) {
+        return res.status(401).json({ error: "Missing signature" });
+      }
+
+      if (!validateSBPaySignature(req.body, signature as string)) {
+        return res.status(401).json({ error: "Invalid signature" });
+      }
+
+      const { order_id, status } = req.body;
+
+      if (status === "completed") {
+        await approveSBPayOrder(order_id);
+        return res.json({ status: "success" });
+      }
+
+      return res.json({ status: "ignored" });
+    } catch (error) {
+      console.error("Webhook processing failed:", error);
+      return res.status(500).json({ error: "Webhook processing failed" });
     }
-
-    if (!validateSBPaySignature(req.body, signature as string)) {
-      return res.status(401).json({ error: "Invalid signature" });
-    }
-
-    // Extract order ID from the webhook payload
-    const { order_id, status } = req.body;
-
-    if (status === "completed") {
-      // Approve the order with SBPay
-      await approveSBPayOrder(order_id);
-      return res.json({ status: "success" });
-    }
-
-    return res.json({ status: "ignored" });
-  } catch (error) {
-    console.error("Webhook processing failed:", error);
-    return res.status(500).json({ error: "Webhook processing failed" });
   }
-});
+);
 
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
+// const PORT = process.env.PORT || 3000;
+// app.listen(PORT, () => {
+//   console.log(`Server running on port ${PORT}`);
+// });
