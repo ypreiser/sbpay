@@ -23,6 +23,10 @@ app.get("/health", (req, res) => {
 });
 
 // Test endpoint
+app.post("/api/test", async (req, res) => {
+  logger.info("Received test request", req);
+});
+
 app.post("/api/test/sbpay", async (req, res) => {
   try {
     const sbPayRequest = {
