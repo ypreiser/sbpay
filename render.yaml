@@ -10,7 +10,7 @@ services:
       - key: PORT
         value: 3000
       - key: APP_URL
-        sync: false
+        value: https://turgswim.onrender.com
       - key: YAAD_MASOF
         sync: false
       - key: YAAD_KEY

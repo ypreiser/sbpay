@@ -41,6 +41,7 @@ export class PaymentController {
               <input type="hidden" name="ClientName" value="${paymentData.customer.name}">
               <input type="hidden" name="Currency" value="1">
               <input type="hidden" name="tmp" value="1">
+              <input type="hidden" name="CallBack" value="${env.APP_URL}/api/yaad-callback">
             </form>
             <script>document.getElementById('yaadForm').submit();</script>
           </body>
@@ -129,6 +130,32 @@ export class PaymentController {
             ? (error as Error).message
             : undefined,
       });
+    }
+  }
+
+  async handleYaadWebhook(req: Request, res: Response): Promise<any> {
+    try {
+      logger.info("Yaad webhook received:", {
+        body: req.body,
+        query: req.query,
+      });
+
+      const { Order: orderId, Status: status } = req.query;
+
+      if (status === "1") {
+        // Yaad success status
+        logger.info("Payment successful, notifying SBPay", { orderId });
+        await this.sbPayService.approveOrder(orderId as string);
+        return res.json({ status: "success" });
+      }
+
+      return res.json({ status: "ignored" });
+    } catch (error) {
+      logger.error("Yaad webhook processing failed:", {
+        error,
+        query: req.query,
+      });
+      return res.status(500).json({ error: "Webhook processing failed" });
     }
   }
 }

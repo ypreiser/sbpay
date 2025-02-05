@@ -14,6 +14,7 @@ const envSchema = z.object({
   SBPAY_API_URL: z.string(),
   NODE_ENV: z.enum(["development", "production"]).default("development"),
   PORT: z.string().default("3000"),
+  APP_URL: z.string().default("http://localhost:3000"),
 });
 
 const env = envSchema.parse(process.env);
