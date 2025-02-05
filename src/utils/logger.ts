@@ -1,18 +1,25 @@
-import { Request, Response, NextFunction } from 'express';
+import express from "express";
+type Request = express.Request;
+type Response = express.Response;
+type NextFunction = express.NextFunction;
 
 export const logger = {
   info: (message: string, meta?: any) => {
-    console.log(new Date().toISOString(), 'INFO:', message, meta || '');
+    console.log(new Date().toISOString(), "INFO:", message, meta || "");
   },
   error: (message: string, error?: any) => {
-    console.error(new Date().toISOString(), 'ERROR:', message, error || '');
-  }
+    console.error(new Date().toISOString(), "ERROR:", message, error || "");
+  },
 };
 
-export const requestLogger = (req: Request, res: Response, next: NextFunction) => {
+export const requestLogger = (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   const start = Date.now();
-  
-  res.on('finish', () => {
+
+  res.on("finish", () => {
     const duration = Date.now() - start;
     logger.info(`${req.method} ${req.url}`, {
       status: res.statusCode,
@@ -22,4 +29,4 @@ export const requestLogger = (req: Request, res: Response, next: NextFunction) =
   });
 
   next();
-}; 
+};

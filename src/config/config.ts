@@ -1,10 +1,12 @@
+import env from "./env.ts";
+
 export const config = {
   development: {
-    logLevel: 'debug',
+    logLevel: "debug",
     keepAlive: false,
   },
   production: {
-    logLevel: 'info',
+    logLevel: "info",
     keepAlive: true,
-  }
-}[env.NODE_ENV]; 
+  },
+}[env.NODE_ENV];

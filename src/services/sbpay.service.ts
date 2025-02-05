@@ -1,6 +1,5 @@
 import crypto from 'crypto';
 import env from '../config/env.ts';
-import type { SBPayRequest } from '../types/sbpay';
 
 export class SBPayService {
   private static instance: SBPayService;
