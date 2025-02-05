@@ -1,6 +1,9 @@
 import rateLimit from 'express-rate-limit';
 import helmet from 'helmet';
-import { Express } from 'express';
+import express from "express";
+type Express = express.Express;
+type Response = express.Response;
+
 
 export const configureSecurityMiddleware = (app: Express) => {
   // Rate limiting
